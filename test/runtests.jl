@@ -69,6 +69,9 @@ using .G5
   @test zero(KVector(a))+b == KVector(b) == b + zero(KVector(a))
   @test zero(B)*B == zero(B) == B*zero(B) == B*zero(KVector{Float64, grade(B), 1})
   @test 3.0*B == B+B+B == B*3.0
+  @test iszero(B∧B)
+  @test grade(B∧B2) == 2
 
+#!me passes with Blades v0.1.1+  @test normalize(KVector(-2.2(e₂∧e₃))) == KVector(normalize(-2.2(e₂∧e₃))) == KVectors.normalize_safe(KVector(-2.2(e₂∧e₃)))
 end
 
