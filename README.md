@@ -4,7 +4,7 @@
 # KVectors
 
 The `KVectors` [Julia](http://julialang.org) package defines the `KVector` Type
-to represent linear combinations of [k-blades](https://en.wikipedia.org/wiki/Blade_(geometry))
+to represent linear combinations of [k-blades](https://en.wikipedia.org/wiki/Blade_(geometry)).
 
 All Blades in a given KVector have the same grade.
 
