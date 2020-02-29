@@ -13,7 +13,7 @@ This is the main object in [Grassmann Algebra](https://en.wikipedia.org/wiki/Ext
 KVectors essentially extends the algebras and Types defined in [Blades](https://github.com/mewertd2/Blades.jl) with the `+` operator.  This allows for a vector space of Blades.  
 
 Most operators that act on Blades can act on KVectors.  Notable exceptions are the inner product `⋅` and geometric product `*`.
-These can not, in general, operate on KVectors as they can result in a mixed grade vector.  The KVectors algebra is not closed under such operators.  For mixed grades you need [Multivectors](https://github.com/mewertd2/Multivectors.jl)
+These can not, in general, operate on KVectors as they could result in a mixed grade vector.  The KVectors algebra is not closed under such operators.  For mixed grades you need [Multivectors](https://github.com/mewertd2/Multivectors.jl)
 
 See the documentation of [Blades](https://github.com/mewertd2/Blades.jl) for more information.
 
