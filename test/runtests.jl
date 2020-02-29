@@ -59,6 +59,8 @@ using .PG3
   @test B-B == -a - -B - b
 
   @test dual(prune(B-B)) == prune(B-B)
+  @test iszero(KVector(0.0e₂))
+  @test iszero(1.0e₁-1.0e₁)
   @test dual(B) == !B
 
 #!me passes with Blades v0.1.1+  @test normalize(KVector(-2.2(e₂∧e₃))) == KVector(normalize(-2.2(e₂∧e₃))) == KVectors.normalize_safe(KVector(-2.2(e₂∧e₃)))
@@ -76,13 +78,21 @@ using .G3
 
   a = sortbasis(1.0e₁ + 3.0e₃)
 
+  @test a == KVector([1.0,0.0,3.0]) |> KVectors.prune
   @test first(a) == a[1]
+  @test firstindex(a) == 1
   @test a[end] == a[2]
   @test isnull(a) == false
   @test length(a) == 2
   @test isempty(a) == false
   @test [i for i in a] == map(i->i, a) == (i for i in a) |> collect 
   B = -1.0(e₁∧e₂) + 2.0(e₁∧e₃)
+  x = 0.0
+  for i in a
+    x = x+scalar(i)
+  end
+  @test x == mapreduce(scalar, +, a)
+
   @test conj(a) == a
   @test conj(B) == -B
   @test KVector(a) == a
@@ -98,4 +108,8 @@ using .G3
   @test KVectors.norm_sqr(a) == mapreduce(aᵢ->aᵢ*aᵢ, +, a)
   @test norm(KVectors.normalize_safe(a)) == norm(normalize(a))
 
+  # warning this relys on LinearAlebra:⋅ 
+  # which only works on KVectors of grade 1 with matching sorted basis 1-vectors present
+  # for a proper inner product you should be using Multivectors.jl
+  @test det(1.0e₁+1.0e₂, 1.0e₁+1.0e₂) == 1.0
 end
