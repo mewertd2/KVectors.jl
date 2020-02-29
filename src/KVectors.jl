@@ -206,21 +206,14 @@ for length(a) = 2, gram( a, u ) = [ a₁⋅u₁ a₁⋅u₂ ;
                                     a₂⋅u₁ a₂⋅u₂ ]
 """
 function gram(a::K,u::L) where {K<:KVector, L<:KVector}
-  a = sortbasis(a)
-  u = sortbasis(u)
+  a = sortbasis(prune(a))
+  u = sortbasis(prune(u))
   n = length(a)
-  if n > length(u)
-    j = 1
-    u = map(1:n) do i
-      if subspace(a[i]) != subspace(u[j])
-        zero(a[i])
-      else
-        j = j+1
-        u[j-1]
-      end
-    end
+  if n != length(u)
+    zero(eltype(eltype(a)))
+  else
+    [aᵢ⋅uⱼ for uⱼ in u for aᵢ in a] |> A->(reshape(A,n,n))
   end
-  [aᵢ⋅uⱼ for uⱼ in u for aᵢ in a] |> A->(reshape(A,n,n))
 end
 
 

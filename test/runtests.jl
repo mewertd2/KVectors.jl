@@ -41,6 +41,7 @@ using .PG3
   B = a+b
   B2 = b+c
   @test a+b+c+b+a == e₁(2.0) + e₂(4.0) + e₃(3.0) == 2.0a+2.0b+c
+  @test a+ (-b) == a - b
   @test B+B2 == B2+B == a+2.0b+c
   @test (a+b)+(c+d) == a+b+c+d
   @test 5.0*(a+b+c+d) == 5.0*b+5.0*c+5.0*d+5.0*a
@@ -93,6 +94,8 @@ using .G3
   end
   @test x == mapreduce(scalar, +, a)
 
+  @test promote_rule(typeof(KVector(1e₁)), typeof(1e₁)) == KVector
+
   @test conj(a) == a
   @test conj(B) == -B
   @test KVector(a) == a
@@ -100,6 +103,7 @@ using .G3
   @test pseudoscalar(a) == pseudoscalar(a[1])
   @test grade(⟂(a)∧a) == grade(pseudoscalar(a))
   @test a/2.0 == a*0.5
+  @test !(a == a∧e₂(1.0))
 
   @test coords(a) == scalar.(sortbasis(a+0.0e₂))
   @test coords(a[1]) == [scalar(a[1]), 0.0, 0.0]
@@ -108,8 +112,27 @@ using .G3
   @test KVectors.norm_sqr(a) == mapreduce(aᵢ->aᵢ*aᵢ, +, a)
   @test norm(KVectors.normalize_safe(a)) == norm(normalize(a))
 
-  # warning this relys on LinearAlebra:⋅ 
-  # which only works on KVectors of grade 1 with matching sorted basis 1-vectors present
-  # for a proper inner product you should be using Multivectors.jl
+  @test grade(⋆(a)) == grade(pseudoscalar(a))-grade(a)
+
+  # warning these relys on LinearAlebra.:⋅ (dot product) 
+  # which only works on KVectors of grade p with matching sorted basis p-vectors present
+  # for a robust inner product you should be using Multivectors.jl
   @test det(1.0e₁+1.0e₂, 1.0e₁+1.0e₂) == 1.0
+  @test det(1.0e₁+1.0e₂, 1.0e₁+1.0e₂+1.0e₃) == 0.0
+  @test cos(KVector([1.0,0.0,0.0], 𝐼), KVector([1.0,1.0,0.0], 𝐼)) ≈ cos(π/4)
 end
+
+@testset "Null KVectors" begin
+  e₁, e₂, e₃ = alle(G3, 3)[1:3]
+  n = KVector{Float64,1,0}()
+  nn = KVector{Float64,1,0}()
+  a = KVector{Float64,1,1}([1.0e₁])
+
+  @test iszero(n)
+  @test isnull(n+n)
+  @test n+a == a == a+n
+  @test isnull(n*n)
+  @test iszero(dual(n))
+  @test iszero(⟂(n))
+end
+
