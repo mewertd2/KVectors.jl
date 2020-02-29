@@ -24,33 +24,14 @@ using Test
 using Blades
 using KVectors
 using LinearAlgebra
+using StaticArrays
 
 module PG3
   using Blades
   @generate_basis("0+++")
 end
-
-module G2
-  using Blades
-  # need last param to be true for differential forms
-  @generate_basis("++",false,true,true)
-end
-
-module G3
-  using Blades
-  @generate_basis("+++",false,true,true)
-end
-
-module G5
-  using Blades
-  @generate_basis("+++++",false,true,true)
-end
-
 using .PG3
-using .G2
-using .G3
-using .G5
-  
+
 @testset "KVectors" begin
   e₁, e₂, e₃, e₄ = alle( PG3, 4)[1:4]
   a = e₁(1.0); b = e₂(2.0); c = e₃(3.0); d = e₄(4.0)
@@ -70,8 +51,51 @@ using .G5
   @test zero(B)*B == zero(B) == B*zero(B) == B*zero(KVector{Float64, grade(B), 1})
   @test 3.0*B == B+B+B == B*3.0
   @test iszero(B∧B)
+  @test 2.0∧B∧B2 == B∧b∧2.0 - c∧B∧2.0
   @test grade(B∧B2) == 2
+  @test grade(B,1) == B
+  @test reverse(B) == B
+  @test reverse(B∧B2) == -B∧B2
+  @test B-B == -a - -B - b
+
+  @test dual(prune(B-B)) == prune(B-B)
+  @test dual(B) == !B
 
 #!me passes with Blades v0.1.1+  @test normalize(KVector(-2.2(e₂∧e₃))) == KVector(normalize(-2.2(e₂∧e₃))) == KVectors.normalize_safe(KVector(-2.2(e₂∧e₃)))
 end
 
+module G3
+  using Blades
+  @generate_basis("+++",false,true,true)
+end
+using .G3
+ 
+@testset "More KVectors" begin
+  e₁, e₂, e₃ = alle(G3, 3)[1:3]
+  𝐼 = alle(G3,3)[end]
+
+  a = sortbasis(1.0e₁ + 3.0e₃)
+
+  @test first(a) == a[1]
+  @test a[end] == a[2]
+  @test isnull(a) == false
+  @test length(a) == 2
+  @test isempty(a) == false
+  @test [i for i in a] == map(i->i, a) == (i for i in a) |> collect 
+  B = -1.0(e₁∧e₂) + 2.0(e₁∧e₃)
+  @test conj(a) == a
+  @test conj(B) == -B
+  @test KVector(a) == a
+  @test KVector([1,2,3], 𝐼) == 1e₁+2e₂+3e₃
+  @test pseudoscalar(a) == pseudoscalar(a[1])
+  @test grade(⟂(a)∧a) == grade(pseudoscalar(a))
+  @test a/2.0 == a*0.5
+
+  @test coords(a) == scalar.(sortbasis(a+0.0e₂))
+  @test coords(a[1]) == [scalar(a[1]), 0.0, 0.0]
+  @test KVectors.prune(KVector(coords(a) .* basis_1blades(a))) == a
+  @test norm(basis_1vector(a)) == sqrt(3.0)
+  @test KVectors.norm_sqr(a) == mapreduce(aᵢ->aᵢ*aᵢ, +, a)
+  @test norm(KVectors.normalize_safe(a)) == norm(normalize(a))
+
+end

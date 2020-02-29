@@ -34,7 +34,8 @@ sortbasis,
 isnull,
 coords,
 prune,
-normalize_safe
+normalize_safe,
+basis_1vector
 
 using Blades
 using StaticArrays
@@ -46,11 +47,6 @@ import Blades.⟂
 import Blades.∧
 import Blades.pseudoscalar
 import Blades.⋆
-
-partial = (f::Function,y...)->(z...)->f(y...,z...)
-swap(f::Function) = (a,b...)->f(b...,a)
-second(c) = c[2]
-rest(c) = c[2:end]
 
 "Container of Blades with the same grade and element type"
 struct KVector{T,K,N} <: AbstractArray{T,1}
@@ -82,7 +78,9 @@ KVector(v::Blade{T,K}) where {T,K} = KVector{T}(v)
 Base.convert(::Type{B}, k::K) where {T,N,B<:KVector, K<:Blade{T,N}} = B(k)
 KVector(kv::V) where {T, KN, K<:Blade{T,KN}, V<:AbstractVector{K}} = KVector{T,KN,length(kv)}(kv)
 KVector(kv::KV) where KV<:KVector = kv
+
 KVector(uv::C, 𝐼::Blade{KT,N}) where {T, N, KT, C<:SVector{N,T}} = KVector(uv.*(basis_1blades(𝐼)))
+
 function KVector(uv::C) where {T, N, C<:SVector{N,T}} 
   @warn "resolving Blade types in top-level module via dual(1)"
   KVector(uv.*(basis_1blades(dual(1))))
@@ -91,7 +89,9 @@ end
 KVector(uv::A) where {T<:Real, A<:Vector{T}} = KVector(SVector{length(uv)}(uv))
 KVector(uv::A, 𝐼::Blade{KT,N}) where 
   {T<:Real, A<:Vector{T}, N, KT} = 
-  KVector(SVector{length(uv)}(uv))
+  KVector(SVector{length(uv)}(uv), 𝐼)
+
+KVector(uv, ::Type{I}) where {I<:Blade} = KVector(uv, 1I)
 
 Base.iszero(b::B) where {T,K,N,B<:KVector{T,K,0}} = true
 Base.iszero(b::B) where {T,K,N,B<:KVector{T,K,N}} = iszero(sum((x->x*x).((k->k.x).(b.k))))
@@ -148,9 +148,6 @@ Base.:+(b::KVector{T,K}, nb::NullKVector{T,K}) where {T,K} = nb+b
 Base.:*(s::T, b::B) where {T<:Real, B<:KVector} = B(s*b.k)
 Base.:*(b::B, s::T) where {T<:Real, B<:KVector} = s*b
 Base.:/(b::B, s::T) where {T<:Real, B<:KVector} = b*(one(T)/s)
-
-#Base.:*(k::K, b::B) where {K<:KVector, B<:Blade} = mapreduce(partial(swap(*),b),+,k) 
-#Base.:*(b::B, k::K) where {B<:Blade, K<:KVector} = mapreduce(partial(*,b),+,k) 
 
 pseudoscalar(k::K) where {K<:KVector} = pseudoscalar(first(k))
 
@@ -250,6 +247,7 @@ cos( a::A, b::B ) where { A<:Union{KVector, Blade}, B<:Union{KVector, Blade}} = 
 
 Blades.basis_1blades( k::K ) where {K<:KVector} = basis_1blades(first(k))
 
+"""A KVector formed from all basis 1-vectors set to magnitude 1.0. Useful as a test direction"""
 basis_1vector( k::K ) where {K<:KVector} = KVector(one.(basis_1blades(k)))
 
 
