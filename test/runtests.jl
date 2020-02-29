@@ -80,6 +80,8 @@ using .G3
   a = sortbasis(1.0e₁ + 3.0e₃)
 
   @test a == KVector([1.0,0.0,3.0]) |> KVectors.prune
+  @test sortbasis(1.0e₂) == 1.0e₂
+  @test convert(KVector, 1.0e₂) == KVector(1.0e₂)
   @test first(a) == a[1]
   @test firstindex(a) == 1
   @test a[end] == a[2]
