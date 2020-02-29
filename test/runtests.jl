@@ -79,6 +79,8 @@ using .G3
 
   a = sortbasis(1.0e₁ + 3.0e₃)
 
+  @test eltype(a) <: Blade
+  @test size(a) == (2,)
   @test a == KVector([1.0,0.0,3.0]) |> KVectors.prune
   @test sortbasis(1.0e₂) == 1.0e₂
   @test convert(KVector, 1.0e₂) == KVector(1.0e₂)
