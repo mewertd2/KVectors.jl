@@ -73,7 +73,7 @@ Base.eltype(::Type{K}) where {T,P,K<:KVector{T,P}} = Blade{T,P}
 
 Base.conj(k::K) where {K<:KVector} = K(map(conj, k))
 
-KVector{T}(v::Blade{T,K}) where {T,K} = KVector{T,K,1}([v])
+KVector{T}(v::Blade{T,K}) where {T,K} = KVector{T,K,1}(SArray{Tuple{1},Blade{T,K},1,1}(v))
 KVector(v::Blade{T,K}) where {T,K} = KVector{T}(v)
 Base.convert(::Type{B}, k::K) where {T,N,B<:KVector, K<:Blade{T,N}} = B(k)
 KVector(kv::V) where {T, KN, K<:Blade{T,KN}, V<:AbstractVector{K}} = KVector{T,KN,length(kv)}(kv)
@@ -96,15 +96,17 @@ KVector(uv, ::Type{I}) where {I<:Blade} = KVector(uv, 1I)
 Base.iszero(b::B) where {T,K,N,B<:KVector{T,K,0}} = true
 Base.iszero(b::B) where {T,K,N,B<:KVector{T,K,N}} = iszero(sum((x->x*x).((k->k.x).(b.k))))
 
-Base.:+(b::KA, c::KB) where {T<:Number,K, KA<:Blade{T,K}, KB<:Blade{T,K}} = KVector{T,K,2}([b,c])
-Base.:-(b::KA, c::KB) where {T<:Number,K, KA<:Blade{T,K}, KB<:Blade{T,K}} = KVector{T,K,2}([b,-c])
+Base.:+(b::KA, c::KB) where {T<:Number,K, KA<:Blade{T,K}, KB<:Blade{T,K}} = 
+  KVector{T,K,2}(SArray{Tuple{2},Blade{T,K},1,2}(b,c))
+Base.:-(b::KA, c::KB) where {T<:Number,K, KA<:Blade{T,K}, KB<:Blade{T,K}} = 
+  KVector{T,K,2}(SArray{Tuple{2},Blade{T,K},1,2}(b,-c))
 
-function Base.:+(k::V, b::KVector{T,K,N}) where {T,K, V<:Blade{T,K},N} 
-  i = findfirst(v->typeof(v)==V, b.k)
+function Base.:+(b::V, k::KVector{T,K,N}) where {T,K, V<:Blade{T,K},N} 
+  i = findfirst(v->typeof(v)==V, k.k)
   if i == nothing
-    KVector{T,K,N+1}([k,b.k...])
+    KVector{T,K,N+1}(vcat(Blade{T,K}[b],k.k))
   else
-    KVector(setindex(b.k,b.k[i]+k,i))
+    KVector(setindex(k.k,k.k[i]+b,i))
   end
 end
 
@@ -186,10 +188,37 @@ prune(k::KVector, epsi = eps()) = sum(Iterators.filter(x->abs(scalar(x)) > epsi,
 
 Wedge product between two k-vectors
 """
-∧(A::M,B::N) where {T, M<:KVector{T},N<:KVector} = 
-  (c->isempty(c) ? zero(T) : sum(c))(Iterators.filter(!iszero,(aᵢ∧bⱼ for aᵢ in A for bⱼ in B)))
+function ∧(A::KV,B::KV2) where {T,K,N,KV<:KVector{T,K,N}, K2,N2,KV2<:KVector{T,K2,N2}}
+  AwB = Blade{T, K+K2}[]
+  sizehint!(AwB, N*N2)
+  for aᵢ in A.k
+    for bⱼ in B.k
+      awb = aᵢ∧bⱼ
+      if !iszero(awb)
+        push!(AwB, awb)
+      end
+    end
+  end
+  sum(AwB)
+end
 
-∧(a::M,B::N) where {M<:Blade,N<:KVector} = sum(filter(!iszero, a .∧ B))
+"""
+    ∧(a,b)
+
+Wedge product between blade and k-vector
+"""
+function ∧(a::BT,B::KV2) where {T,K,BT<:Blade{T,K}, K2,N2,KV2<:KVector{T,K2,N2}}
+  AwB = Blade{T, K+K2}[]
+  sizehint!(AwB, N2)
+  for bⱼ in B.k
+    awb = a∧bⱼ
+    if !iszero(awb)
+      push!(AwB, awb)
+    end
+  end
+  sum(AwB)
+end
+
 ∧(B::M,a::N) where {M<:KVector,N<:Blade} = -a∧B
 ∧(s::T,B::N) where {T<:Real,N<:KVector} = s*B
 ∧(B::N,s::T) where {T<:Real,N<:KVector} = s*B
