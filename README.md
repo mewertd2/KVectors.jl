@@ -1,6 +1,8 @@
 [![Build Status](https://travis-ci.com/mewertd2/KVectors.jl.svg?branch=master)](https://travis-ci.com/mewertd2/KVectors.jl)
 [![codecov.io](https://codecov.io/github/mewertd2/KVectors.jl/coverage.svg?branch=master)](https://codecov.io/github/mewertd2/KVectors.jl?branch=master)
 
+# Note:  this package is no longer maintained.  All the Types and methods have been moved to the [Multivectors.jl](https://github.com/digitaldomain/Multivectors.jl) Package.
+
 # KVectors
 
 The `KVectors` [Julia](http://julialang.org) package defines the `KVector` Type
